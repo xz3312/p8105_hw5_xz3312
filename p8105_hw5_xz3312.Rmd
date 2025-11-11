@@ -1,0 +1,73 @@
+---
+title: "p8105_hw5_xz3312"
+author: "Eric Zhang"
+date: "2025-11-11"
+output: github_document
+---
+
+```{r packages}
+library(tidyverse)
+library(ggplot2)
+library(viridis)
+library(broom)
+set.seed(1234)
+
+theme_set(
+  theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      plot.title = element_text(face = "bold", size = 14),
+      axis.text = element_text(size = 11),
+      axis.title = element_text(size = 12)
+    )
+)
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill  = "viridis"
+)
+
+scale_colour_discrete <- scale_colour_viridis_d
+scale_fill_discrete   <- scale_fill_viridis_d
+```
+
+# Problem 1
+
+### Suppose you put 𝑛 people in a room, and want to know the probability that at least two people share a birthday. For simplicity, we’ll assume there are no leap years (i.e. there are only 365 days) and that birthdays are uniformly distributed over the year (which is actually not the case). Write a function that, for a fixed group size, randomly draws “birthdays” for each person; checks whether there are duplicate birthdays in the group; and returns TRUE or FALSE based on the result.
+```{r}
+# To simulate this, I define a function called birthday_simulation. For a chosen group size, the function randomly assigns each person a birthday by sampling from the integers 1 through 365 with replacement. If at least one birthday is shared the function returns TRUE.
+
+birthday_simulation <- function(n) {
+  birthdays <- sample(x = 1:365, size = n, replace = TRUE)
+  return(length(birthdays) != length(unique(birthdays)))
+}
+```
+
+
+### Run this function 10000 times for each group size between 2 and 50. For each group size, compute the probability that at least two people in the group will share a birthday by averaging across the 10000 simulation runs. Make a plot showing the probability as a function of group size, and comment on your results.
+```{r}
+estimate_shared_bday <- function(n, B = 10000) {
+  hits <- vapply(
+    1:B,
+    function(i) any(duplicated(sample.int(365, n, replace = TRUE))),
+    logical(1)
+  )
+  mean(hits)
+}
+
+sizes <- 2:50
+probability_table <- tibble(
+  group_size = sizes,
+  shared_birthday_prob = vapply(sizes, estimate_shared_bday, numeric(1))
+)
+
+ggplot(probability_table, aes(x = group_size, y = shared_birthday_prob)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Estimated probability of ≥1 shared birthday vs. group size",
+    x = "Group size",
+    y = "Probability of a shared birthday"
+  )
+```
+
