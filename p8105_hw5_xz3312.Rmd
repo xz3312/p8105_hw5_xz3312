@@ -114,10 +114,19 @@ As the true mean mu moves further from the null, power increases, which shows th
 
 ### Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of 𝜇 on the x axis. Describe the association between effect size and power.
 ```{r}
-
-
-
+all_results %>% 
+  group_by(true_mu) %>% 
+  summarize(power_est = mean(p_value < 0.05)) %>% 
+  ggplot(aes(x = true_mu, y = power_est)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 2) +
+  labs(
+    title = "Estimated Power by True Mean (μ)",
+    x = "True Mean (μ)",
+    y = "Proportion of Rejections (Power)"
+  )
 ```
+There is a positive relationship between power and effect size. The plot demonstrates that power rises as the true mean (μ) moves further from the null hypothesis. When μ is small (close to 0), the probability of detecting a difference is low because the true mean is similar to the null. As μ increases, the effect size grows, and the test becomes more sensitive—making it easier to reject the null hypothesis
 
 
 
