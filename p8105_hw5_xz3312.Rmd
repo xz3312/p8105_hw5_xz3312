@@ -70,7 +70,8 @@ ggplot(probability_table, aes(x = group_size, y = shared_birthday_prob)) +
     y = "Probability of a shared birthday"
   )
 ```
-The probability of a shared birthday between at least two people increases quickly as the group size increases. In very small groups, such as `r prob_tbl$group_size[1]` people, the chance of a match is only about `r round(prob_tbl$shared_birthday_prob[1], 4)`. When the group size reaches `r prob_tbl$group_size[prob_tbl$shared_birthday_prob > 0.5][1]` people, the estimated probability crosses 0.5. By the time the group includes `r prob_tbl$group_size[prob_tbl$shared_birthday_prob > 0.9][1]` people, the probability exceeds 90%, and with `r tail(prob_tbl$group_size, 1)` individuals it approaches `r round(tail(prob_tbl$shared_birthday_prob, 1), 4)`, a shared birthday becomes quite likely.
+The probability of a shared birthday between at least two people increases quickly as the group size increases. For example, at a group size of `r probability_table$group_size[which.min(abs(probability_table$shared_birthday_prob - 0.5))]`, the estimated probability crosses roughly 0.5. When the group size approaches `r max(probability_table$group_size)`, the probability is approximately `r round(max(probability_table$shared_birthday_prob), 3)`, showing that a shared birthday becomes quite likely.
+
 
 # Problem 2
 
@@ -179,9 +180,42 @@ The variables provided include:
 - the case disposition.
 
 Together, these variables give detailed information of each homicide, including victim demographics and investigation outcomes.
-During review, one inconsistency was identified: the case `uid = "Tul-000769"` lists the state as `"AL"`, though the incident occurred in Tulsa. Based on the city name, this state should be `"OK"`. It is corrected in the cleaned dataset.
+During review, one inconsistency was identified: the case `uid = "Tul-000769"` lists the state as `"AL"`, though the incident occurred in Tulsa. Based on the city name Tulsa, this state should be `"OK"`. This will be corrected in cleaned data below.
 
-### Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
+### Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”). For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object, apply the broom::tidy to this object and pull the estimated proportion and confidence intervals from the resulting tidy dataframe.
+```{r}
+# Fix the miscoded state for one Tulsa observation
+homicide_data <- homicide_data %>% 
+  mutate(
+    state = if_else(uid == "Tul-000769", "OK", state)
+  )
+
+# Create city state and summarize total + unsolved homicides by city
+city_summary <- homicide_data %>% 
+  mutate(
+    city_state = str_c(city, ", ", state),
+    unsolved   = disposition %in% c("Closed without arrest", "Open/No arrest")
+  ) %>% 
+  summarize(
+    total_homicides    = n(),
+    unsolved_homicides = sum(unsolved),
+    .by = city_state
+  )
+
+# Extract counts for Baltimore MD and run a proportion test
+baltimore_counts <- city_summary %>% 
+  filter(city_state == "Baltimore, MD")
+
+baltimore_prop_test <- prop.test(
+  x = baltimore_counts$unsolved_homicides,
+  n = baltimore_counts$total_homicides
+)
+
+baltimore_prop_tidy <- broom::tidy(baltimore_prop_test)
+```
+In Baltimore, MD, the estimated proportion of homicides that are unsolved is  `r baltimore_prop_tidy |> pull(estimate) |> round(2)`. Based on this model, the 95% confidence interval for the true proportion ranges from `r baltimore_prop_tidy |> pull(conf.low) |> round(2)` to `r baltimore_prop_tidy |> pull(conf.high) |> round(2)`.
+
+### Now run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city.
 ```{r}
 
 ```
