@@ -88,6 +88,7 @@ simulate_mean_pval <- function(n = 30, mean_true = 0, sd_true = 5, mu_null = 0) 
   results
 }
 
+# Parameters
 n_iter    <- 5000
 mean_grid <- 0:6  # μ = 0,1,2,3,4,5,6
 
@@ -126,7 +127,9 @@ all_results %>%
     y = "Proportion of Rejections (Power)"
   )
 ```
-There is a positive relationship between power and effect size. The plot demonstrates that power rises as the true mean (μ) moves further from the null hypothesis. When μ is small (close to 0), the probability of detecting a difference is low because the true mean is similar to the null. As μ increases, the effect size grows, and the test becomes more sensitive—making it easier to reject the null hypothesis
+There is a positive relationship between power and effect size. The plot demonstrates that power rises as the true mean (μ) moves further from the null hypothesis. When μ is small (close to 0), the probability of detecting a difference is low because the true mean is similar to the null. As μ increases, the effect size grows, and the test becomes more sensitive, making it easier to reject the null hypothesis.
+
+
 
 
 
