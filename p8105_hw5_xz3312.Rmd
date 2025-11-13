@@ -159,6 +159,27 @@ ggplot(avg_tbl, aes(x = true_mu, y = mu_hat, color = set)) +
 ```
 The sample average of mu hat among tests that reject the null is not approximately equal to the true value of mu. This is because we are looking at the subset of simulations where the test statistic was extreme enough to produce a small p-value. This sampling bias inflates the average value of mu hat among rejected tests.
 
+# Problem 3
+
+```{r}
+# Load homicide data from washington post github
+homicide_data <- read_csv(
+  "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv",
+  show_col_types = FALSE
+)
+```
+The homicide dataset includes `r nrow(homicide_data)` records and `r ncol(homicide_data)` variables.  It documents homicide incidents across `r homicide_data |> pull(city) |> n_distinct()` major U.S. cities.
+
+The variables provided include:
+- a unique case identifier (`uid`),
+- the date the homicide was reported,
+- victim information (first and last name, race, age, sex),
+- geographic details (city, state, latitude, longitude),
+- the case disposition.
+
+Together, these variables give detailed information of each homicide, including victim demographics and investigation outcomes.
+During review, one inconsistency was identified: the case `uid = "Tul-000769"` lists the state as `"AL"`, though the incident occurred in Tulsa. Based on the city name, this state should be `"OK"`. It is corrected in the cleaned dataset.
+
 
 
 
