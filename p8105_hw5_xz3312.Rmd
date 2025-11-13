@@ -129,6 +129,37 @@ all_results %>%
 ```
 There is a positive relationship between power and effect size. The plot demonstrates that power rises as the true mean (μ) moves further from the null hypothesis. When μ is small (close to 0), the probability of detecting a difference is low because the true mean is similar to the null. As μ increases, the effect size grows, and the test becomes more sensitive, making it easier to reject the null hypothesis.
 
+### Make a plot showing the average estimate of 𝜇̂ on the y axis and the true value of 𝜇 on the x axis.Make a second plot (or overlay on the first) the average estimate of 𝜇̂ only in samples for which the null was rejected on the y axis and the true value of 𝜇 on the x axis. Is the sample average of 𝜇̂ across tests for which the null is rejected approximately equal to the true value of 𝜇? Why or why not?
+
+```{r}
+# Average μ̂ across all samples for each true μ
+overall_avg <- all_results %>% 
+  summarize(mu_hat = mean(sample_mean), .by = true_mu)
+
+# Average μ̂ only among samples where H0 was rejected
+rejected_avg <- all_results %>% 
+  filter(p_value < 0.05) %>% 
+  summarize(mu_hat = mean(sample_mean), .by = true_mu)
+
+# Combine for plotting
+avg_tbl <- bind_rows(
+  overall_avg  %>%  mutate(set = "All samples"),
+  rejected_avg %>%  mutate(set = "Rejected only")
+)
+
+ggplot(avg_tbl, aes(x = true_mu, y = mu_hat, color = set)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Average μ̂ vs. True μ (All samples vs. Rejected-only)",
+    x = "True value of μ",
+    y = "Average of μ̂",
+    color = NULL
+  )
+```
+The sample average of mu hat among tests that reject the null is not approximately equal to the true value of mu. This is because we are looking at the subset of simulations where the test statistic was extreme enough to produce a small p-value. This sampling bias inflates the average value of mu hat among rejected tests.
+
+
 
 
 
