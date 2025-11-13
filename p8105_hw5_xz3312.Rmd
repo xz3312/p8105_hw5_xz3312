@@ -77,35 +77,45 @@ The probability of a shared birthday between at least two people increases quick
 ### When designing an experiment or analysis, a common question is whether it is likely that a true effect will be detected – put differently, whether a false null hypothesis will be rejected. The probability that a false null hypothesis is rejected is referred to as power, and it depends on several factors, including: the sample size; the effect size; and the error variance. In this problem, you will conduct a simulation to explore power in a one-sample t-test.
 
 ```{r}
-# Function to generate random samples and extract mean and p-value
+# Function to generate dataset, return mean and p-value
 simulate_mean_pval <- function(n = 30, mean_true = 0, sd_true = 5, mu_null = 0) {
   data_tbl <- tibble(values = rnorm(n, mean = mean_true, sd = sd_true))
   results <- data_tbl %>% 
     summarize(
       sample_mean = mean(values),
-      p_value = tidy(t.test(values, mu = mu_null))$p.value |> round(3)
+      p_value     = tidy(t.test(values, mu = mu_null))$p.value
     )
-  return(results)
+  results
 }
 
-n_iter <- 5000
-mean_grid <- 0:6 # mu = 0,1,2,3,4,5,6
+n_iter    <- 5000
+mean_grid <- 0:6  # μ = 0,1,2,3,4,5,6
 
-# Run simulation for each true mean
-sim_results_list <- map(mean_grid, function(mu_val) {
+# Simulation: 5000 per μ
+sim_results_list <- purrr::map(mean_grid, function(mu_val) {
   tibble(iter = 1:n_iter) %>% 
-    mutate(res = map(iter, ~simulate_mean_pval(n = 30, mean_true = mu_val, sd_true = 5, mu_null = 0))) %>% 
+    mutate(res = purrr::map(iter, ~simulate_mean_pval(
+      n = 30, mean_true = mu_val, sd_true = 5, mu_null = 0
+    ))) %>% 
     unnest(res)
 })
 
-# Assign names to list elements for clarity
 names(sim_results_list) <- paste0("mu_", mean_grid)
 
-# Combine simulations into a single data
-all_results <- map2_dfr(sim_results_list, mean_grid, ~mutate(.x, true_mu = .y))
-```
+# Combine all μ into one data frame
+all_results <- purrr::map2_dfr(sim_results_list, mean_grid, ~mutate(.x, true_mu = .y))
 
+# Power by μ (α = 0.05)
+power_tbl <- all_results %>% 
+  summarize(power = mean(p_value < 0.05), .by = true_mu)
+```
+As the true mean mu moves further from the null, power increases, which shows there is positive association between power and effect size with fixed n = 30 sd = 5.
+
+
+### Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of 𝜇 on the x axis. Describe the association between effect size and power.
 ```{r}
+
+
 
 ```
 
