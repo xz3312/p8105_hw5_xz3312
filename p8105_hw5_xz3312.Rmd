@@ -217,11 +217,52 @@ In Baltimore, MD, the estimated proportion of homicides that are unsolved is  `r
 
 ### Now run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city.
 ```{r}
+library(purrr)
+library(broom)
 
+# One prop.test per city in one tidy dataframe, with estimated proportions and CIs for every city
+city_prop_summary <- city_summary %>% 
+  mutate(
+    prop_test = map2(
+      unsolved_homicides,
+      total_homicides,
+      ~ prop.test(x = .x, n = .y)
+    ),
+    prop_test_tidy = map(prop_test, tidy)
+  ) %>% 
+  unnest(prop_test_tidy) %>% 
+  select(city_state, estimate, conf.low, conf.high) %>% 
+  mutate(
+    estimate = round(estimate, 2),
+    conf.low = round(conf.low, 2),
+    conf.high = round(conf.high, 2)
+  )
 ```
 
+### Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+```{r}
+city_prop_summary %>% 
+  ggplot(aes(
+    x = reorder(city_state, estimate),
+    y = estimate,
+    ymin = conf.low,
+    ymax = conf.high
+  )) +
+  geom_point() +
+  geom_errorbar(width = 0.15) +
+  coord_flip() +
+  labs(
+    title = "Proportion of Unsolved Homicides (95% CI) Across U.S. Cities",
+    x = "City, State",
+    y = "Estimated unsolved proportion"
+  ) +
+  theme(
+    axis.text.y = element_text(size = 6),
+    plot.title = element_text(size = 11)
+  )
+```
 
-
+Across the `r nrow(city_prop_summary)` cities in the dataset, the estimated proportion of unsolved homicides varies widely. The city with the **lowest** estimated proportion is `r city_prop_summary %>%  arrange(estimate) %>%  slice(1) %>%  pull(city_state)` at about `r city_prop_summary %>%  arrange(estimate) %>%  slice(1) %>%  pull(estimate) %>%  round(2)`, while the **highest** occurs in `r city_prop_summary %>%  arrange(desc(estimate)) %>%  slice(1) %>%  pull(city_state)` with an estimate near `r city_prop_summary %>%  arrange(desc(estimate)) %>%  slice(1) %>%  pull(estimate) %>%  round(2)`. The confidence intervals also differ substantially across cities, reflecting differences in sample sizes. Overall, the plot shows that cities with larger unsolved proportions tend to cluster toward the top of the reordered axis, emphasizing substantial variation in clearance rates nationwide.
 
 
 
